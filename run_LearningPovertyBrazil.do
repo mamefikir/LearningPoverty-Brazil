@@ -1,6 +1,6 @@
 *==============================================================================*
 *! LEARNING POVERTY IN BRAZIL: replicating the WB indicator at subnational level
-*! Project information at: https://github.com/dianagold/LearningPovertyBrazil
+*! Project information at: https://github.com/worldbank/LearningPoverty-Brazil
 *! Author:  Diana Goldemberg
 *
 * About this project:
@@ -43,7 +43,7 @@ quietly {
   * Method 1 - Github location stored in -whereis-
   *---------------------------------------------
   capture whereis github
-  if _rc == 0 global clone "`r(github)'/LearningPovertyBrazil"
+  if _rc == 0 global clone "`r(github)'/LearningPoverty-Brazil"
 
   * Method 2 - clone selected manually
   *---------------------------------------------
@@ -80,11 +80,11 @@ quietly {
   * Confirm that clone is indeed accessible by testing that master run is there
   cap confirm file "${clone}/`master_run_do'"
   if _rc != 0 {
-    noi disp as error _n "{phang}Having issues accessing your local clone of the LearningPovertyBrazil repo. Please double check the clone location specified in the master run do-file and try again.{p_end}"
+    noi disp as error _n "{phang}Having issues accessing your local clone of the LearningPoverty-Brazil repo. Please double check the clone location specified in the master run do-file and try again.{p_end}"
     error 2222
   }
   else {
-    noi disp as result _n "{phang}LearningPovertyBrazil project profile sucessfully loaded.{p_end}"
+    noi disp as result _n "{phang}LearningPoverty-Brazil project profile sucessfully loaded.{p_end}"
   }
   *-----------------------------------------------------------------------------
 
