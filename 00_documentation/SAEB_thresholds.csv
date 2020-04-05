@@ -1,0 +1,5 @@
+﻿idgrade,subject,threshold_low,threshold_med,threshold_adv
+5,lp,150,200,250
+9,lp,200,275,325
+5,mt,175,225,275
+9,mt,225,300,350
