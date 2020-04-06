@@ -165,7 +165,7 @@ quietly {
   local score_coeff = coeff[1,1]
 
   * HCI component Expected Years of Schooling
-  import delimited "${clone}/02_rawdata/HCI/hci_edu_brazil.csv", clear
+  import delimited "${clone}/02_rawdata/HCI_Brazil/hci_edu_brazil.csv", clear
   rename code code6
   label var eys "Expected Years of Schooling"
   label var hlo "Adjusted Learning, All Grades"
@@ -323,11 +323,18 @@ quietly {
 
 discard
 
-cd "$github\myados\povcal\src"
+cd "$github\myados\groupdata\src"
+
+use "${github}\mytasks\LearningPoverty-Brazil\02_rawdata\INEP_SAEB\SAEB_ALUNO_COVID.dta", clear
 
 groupdata score [aw=learner_weight], z(200) benchmark group 
 
 groupdata score [aw=learner_weight], z(200) mu(207.9) benchmark group 
+
+
+
+cd "$github\myados\alorenz\src"
+
 
   
 *-----------------------------------------------------------------------------
