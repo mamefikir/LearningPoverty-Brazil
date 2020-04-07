@@ -321,21 +321,21 @@ quietly {
 *-----------------------------------------------------------------------------
 * Learning Poverty Simulation (distributionally neutral)
 
+cap whereis github
+if _rc == 0 global clone "`r(github)'/LearningPoverty-Brazil"
+
+cap whereis myados
+if _rc == 0 global myados "`r(myados)'"
+
+cd "${myados}\groupdata\src"
 discard
 
-cd "$github\myados\groupdata\src"
 
-use "${github}\mytasks\LearningPoverty-Brazil\02_rawdata\INEP_SAEB\SAEB_ALUNO_COVID.dta", clear
+use "${clone}\02_rawdata\INEP_SAEB\SAEB_ALUNO_COVID.dta", clear
 
 groupdata score [aw=learner_weight], z(200) benchmark group 
 
 groupdata score [aw=learner_weight], z(200) mu(207.9) benchmark group 
-
-
-
-cd "$github\myados\alorenz\src"
-
-
   
 *-----------------------------------------------------------------------------
 * distribuion all years
