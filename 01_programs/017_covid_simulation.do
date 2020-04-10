@@ -7,7 +7,7 @@ quietly {
   *-----------------------------------------------------------------------------
   * Execution parameters
   *-----------------------------------------------------------------------------
-  local days_to_simulate "60 90 120"
+  local days_to_simulate "25 50 75 100"
 
   * Paths for file manipulation in this program
   local cleandata   "${clone}/03_cleandata"
@@ -219,10 +219,10 @@ quietly {
     gen eys_`value' = eys_base + (learning_poverty_`value' - learning_poverty_base) * `lp_coeff_eys'
 
     * Label those -value- specific vars (scenarios)
-    label var learning_poverty_`value' "Share of learning poor if `value' schooldays are lost (%)"
-    label var nonprof_`value'          "Share of students below minimum proficiency if `value' schooldays are lost"
-    label var net_enrollment_`value'   "Share of kids 10-14 enrolled in school if `value' schooldays are lost"
-    label var eys_`value'              "Expected Years of Schooling if `value' schooldays are lost"
+    label var learning_poverty_`value' "Share of learning poor if `value' school days are lost (%)"
+    label var nonprof_`value'          "Share of students below minimum proficiency if `value' school days are lost"
+    label var net_enrollment_`value'   "Share of kids 10-14 enrolled in school if `value' school days are lost"
+    label var eys_`value'              "Expected Years of Schooling if `value' school days are lost"
     label var score_`value'            "Mean score if `value' schooldays are lost (%)"
   }
 
@@ -250,10 +250,6 @@ quietly {
   format score* nonprof* learning_poverty* net_enrollment* eys* %5.1f
   format nonprof* %5.2f
 
-  * Save DTA and export CSV
-  compress
-  save "`outputs'/LP_Brazil_covid_simulation.dta", replace
-  export delimited "`outputs'/LP_Brazil_covid_simulation.csv", replace
 
   *-----------------------------------------------------------------------------
 
@@ -268,14 +264,87 @@ quietly {
          twopt(legend(subtitle("LP Baseline (%)"))) ///
          savegraph("`outputs'/LP_Brazil_covid_simulation_base.png") replace
 
-  * For each scenario, the change in percentage points
+  * For each scenario, the change in Learning poverty
   foreach value of local days_to_simulate {
+
+    * LP change in percentage points
     gen lp_increase_`value' = learning_poverty_`value' - learning_poverty_base
+    label var lp_increase_`value' "Learning Poverty increase if `value' school days are lost (pp)"
+
+    * Map the intensity of the lp increase
     maptile lp_increase_`value', geography(brazil_counties) stateoutline(medium) ///
-           fcolor(Reds) cutvalues(5 10 15) legdecimals(0) ///
-           twopt(legend(subtitle("LP Increase (pp)"))) ///
+           fcolor(Reds) cutvalues(2 4 6 8) legdecimals(0) ///
+           twopt(legend(subtitle("LP Change (pp)"))) ///
            savegraph("`outputs'/LP_Brazil_covid_simulation_change`value'.png") replace
+
+    sum lp_increase_`value' if geography == "county", detail
+    local lpi_median : di %2.1f `r(p50)'
+    local note "Median = `lpi_median'"
+
+    histogram lp_increase_`value' if geography == "county" & lp_increase_`value' <= 18, ///
+              lcolor(black) fcolor(orange_red%60) scheme(s1color) ///
+              xline(`r(p50)', lwidth(thick) lcolor(maroon)) ///
+              xlabel(0(3)18) ylabel(0(.2).7) text(.5 `lpi_median' "`note'", place(e))
+    graph export "`outputs'/LP_Brazil_covid_histogram_change`value'.png", replace
+
   }
+   
+
+  * Save DTA and export CSV
+  compress
+  save "`outputs'/LP_Brazil_covid_simulation.dta", replace
+  export delimited "`outputs'/LP_Brazil_covid_simulation.csv", replace
+
+  *-----------------------------------------------------------------------------
+  * HOTSPOT ANALYSIS
+  
+  * Load hotspot ado
+  do "${clone}/01_programs/Hotspot_ado/hotspot.ado
+    
+  * Importing centroids txt (hosted in Repo - was calculated in ArcGIS based on shapefile downloaded from IBGE)
+  import delimited "${clone}/02_rawdata/IBGE_Shapefile/IBGE_counties_centroids.txt", encoding("utf-8") clear
+  rename cd_geocmu code
+  save "${clone}/02_rawdata/IBGE_Shapefile/IBGE_counties_centroids.dta", replace
+
+  * Reopen covid dataset
+  use "${clone}/04_outputs/LP_Brazil_covid_simulation.dta", clear
+
+  * Merge centroid information
+  merge m:1 code using "${clone}/02_rawdata/IBGE_Shapefile/IBGE_counties_centroids.dta", keep(match) nogen
+  
+  * Change LPV variable weighted based on the population
+  gen wgt_change = (lp_increase_50) * population_1014/100
+
+  putmata popw = population_1014, replace
+
+  hotspot lp_increase_50 wgt_change, xcoord(x_cent) ycoord(y_cent) radius(500) nei(1)
+
+  * Map the intensity of the lp increase
+  foreach var in goS_lp_increase_50 goZ_lp_increase_50 goS_wgt_change goZ_wgt_change {
+    maptile `var', geography(brazil_counties) stateoutline(medium) ///
+          fcolor(Reds) twopt(legend(off)) ///
+          savegraph("${clone}/04_outputs/HotSpot_change50_`var'.png") replace
+  }
+  *-----------------------------------------------------------------------------
+  
+  * HISTOGRAM IN EXCEL
+  
+  keep if geography == "county"
+  keep code lp_increase_*
+  reshape long lp_increase_, i(code) j(days)
+  gen bin_lp_change = int(lp_increase_)
+  collapse (count) code, by(bin_lp_change days)
+  gen share_counties = code / 5523
+
+
+  keep if geography == "county"
+  keep code lp_increase_*
+  reshape long lp_increase_, i(code) j(days)
+  gen bin_lp_change = int(lp_increase_)
+  foreach value of local days_to_simulate {
+    gen int bin_`value' = int(lp_increase_`value')
+  }
+  collapse (count) code, by(bin_*)
 
   noi disp as res _newline "Done."
 
