@@ -322,7 +322,8 @@ quietly {
   * Map the intensity of the lp increase
   foreach var in goS_lp_increase_50 goZ_lp_increase_50 goS_wgt_change goZ_wgt_change {
     maptile `var', geography(brazil_counties) stateoutline(medium) ///
-          fcolor(Reds) twopt(legend(off)) ///
+          fcolor(Reds) legdecimals(0) ///
+          twopt(legend(subtitle("LP Increase"))) ///
           savegraph("${clone}/04_outputs/HotSpot_change50_`var'.png") replace
   }
   *-----------------------------------------------------------------------------
