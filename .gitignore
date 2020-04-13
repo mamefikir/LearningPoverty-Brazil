@@ -77,7 +77,7 @@
 !02_rawdata/Maptile_Template/*.zip
 
 # CSV files in selected folders
-!02_rawdata/HCI/*.csv
+!02_rawdata/HCI_Brasil/*.csv
 !02_rawdata/INEP_Transicao/*.csv
 
 #######################
