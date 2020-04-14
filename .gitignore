@@ -76,9 +76,8 @@
 # The Maptile templates
 !02_rawdata/Maptile_Template/*.zip
 
-# CSV files in selected folders
-!02_rawdata/HCI/*.csv
-!02_rawdata/INEP_Transicao/*.csv
+# CSV files in rawdata subfolders
+!02_rawdata/*/*.csv
 
 #######################
 # Include all the files with passwords or tokens here. All files named

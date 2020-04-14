@@ -165,7 +165,7 @@ quietly {
   local score_coeff = coeff[1,1]
 
   * HCI component Expected Years of Schooling
-  import delimited "${clone}/02_rawdata/HCI/hci_edu_brazil.csv", clear
+  import delimited "${clone}/02_rawdata/HCI_Brazil/hci_edu_brazil.csv", clear
   rename code code6
   label var eys "Expected Years of Schooling"
   label var hlo "Adjusted Learning, All Grades"
@@ -297,12 +297,12 @@ quietly {
 
   *-----------------------------------------------------------------------------
   * HOTSPOT ANALYSIS
-  
+
   * Load hotspot ado
   do "${clone}/01_programs/Hotspot_ado/hotspot.ado
     
   * Importing centroids txt (hosted in Repo - was calculated in ArcGIS based on shapefile downloaded from IBGE)
-  import delimited "${clone}/02_rawdata/IBGE_Shapefile/IBGE_counties_centroids.txt", encoding("utf-8") clear
+  import delimited "${clone}/02_rawdata/IBGE_Shapefile/IBGE_counties_centroids.csv", encoding("utf-8") clear
   rename cd_geocmu code
   save "${clone}/02_rawdata/IBGE_Shapefile/IBGE_counties_centroids.dta", replace
 
