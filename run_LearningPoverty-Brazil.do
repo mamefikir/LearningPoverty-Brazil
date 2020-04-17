@@ -1,7 +1,7 @@
 *==============================================================================*
 *! LEARNING POVERTY IN BRAZIL: replicating the WB indicator at subnational level
 *! Project information at: https://github.com/worldbank/LearningPoverty-Brazil
-*! Author:  Diana Goldemberg
+*! Author:  Diana Goldemberg and Joao Pedro Azevedo
 *
 * About this project:
 *   Replicates the World Bank indicator that combines schooling and learning
