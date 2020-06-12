@@ -18,7 +18,7 @@ quietly {
   set more            off
   set varabbrev       off, permanently
   set emptycells      drop
-  set maxvar          10000
+  *set maxvar          10000
   version             15
 
   * Time-saving option is activated by default (that is, set to zero)
@@ -156,6 +156,9 @@ quietly {
   
   * TASK 017: Simulate Covid-19 effects on Learning Poverty
   noi do "${clone}/01_programs/017_covid_simulation.do"
+  
+  * TASK 019: Clean and prepare DIEESE strike data for merge with brazill_full.dta
+  noi do "${clone}/01_programs/019_strike_cleaning.do"
   *-----------------------------------------------------------------------------
 
 }
