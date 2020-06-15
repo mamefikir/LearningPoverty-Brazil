@@ -192,7 +192,69 @@
   gen professional_general_federal=0
   replace  professional_general_federal=1 if categoria_profissional=="Rede Pública Federal de ENSINO"
 
+  *Alternative no. 2, instead of specific categories, breakdown in subcategories 
+  gen professor=0
+  gen auxiliar=0
+  gen categoria_municipal=0
+  gen categoria_federal=0
+  gen categoria_state=0
+  gen categoria_superior=0
+  gen categoria_TP=0
 
+  #delimit ;
+  replace auxiliar=1 if professional_aux_federal==1 |
+  professional_aux_federal_TP==1 |
+  professional_aux_federal_sup==1 |
+  professional_aux_municipal==1 |
+  professional_aux_state==1 |
+  professional_aux_state_TP==1 |
+  professional_aux_state_sup==1 
+  ;
+
+  replace professor=1 if professional_prof_federal==1 |
+  professional_prof_federal_TP==1 |
+  professional_prof_federal_sup==1 |
+  professional_prof_municipal==1 |
+  professional_prof_municipal_sup==1 |
+  professional_prof_state==1 |
+  professional_prof_state_TP==1 |
+  professional_prof_state_sup==1
+  
+  ;
+  replace categoria_municipal=1 if professional_aux_municipal==1 |
+  professional_prof_municipal==1 |
+  professional_prof_municipal_sup==1 
+  
+  ;
+  replace categoria_federal=1 if professional_aux_federal==1 |
+  professional_aux_federal_TP==1 |
+  professional_aux_federal_sup==1 
+  
+  ;
+  replace categoria_state=1 if  professional_aux_state==1 |
+  professional_aux_state_TP==1 |
+  professional_aux_state_sup==1 |
+   professional_prof_state==1 |
+  professional_prof_state_TP==1 |
+  professional_prof_state_sup==1
+  
+  ;
+  replace categoria_superior=1 if professional_aux_federal_sup==1 |
+  professional_aux_state_sup==1 |
+  professional_prof_municipal_sup==1 |
+  professional_prof_state_sup==1
+  
+  ;
+  replace categoria_TP=1 if  professional_aux_federal_TP==1 |
+  professional_aux_state_TP==1 |
+  professional_prof_federal_TP==1 |
+  professional_prof_state_TP==1 
+  
+  ;
+  #delimit cr 
+  
+  
+  
   *format start_date, start_year, end_date, end_year. In the future correct for leap years.
   gen start_date=date(inicio, "MDY")
   format start_date  %td
@@ -251,6 +313,13 @@
   label var end_date "Ending date of the strike, own calculations startdate+days"
   label var end_year "Ending year of the strike, own calculations startdate+days"
   label var different_year "1 end_year is different than start_year"
+  label var professor "1 if any professional_prof ==1, 0 if else"
+  label var auxiliar "1 if any professional_aux ==1, 0 if else"
+  label var categoria_municipal "1 if any professional_municipal ==1, 0 if else"
+  label var categoria_federal "1 if any professional_federal ==1, 0 if else"
+  label var categoria_state "1 if any professional_state ==1, 0 if else"
+  label var categoria_superior "1 if any professional_sup ==1, 0 if else"
+  label var categoria_TP "1 if any professional_TP ==1, 0 if else"
  
   *explore number of strikes per geo_location per year 
   preserve
@@ -258,8 +327,27 @@
   collapse (sum) strike days, by(start_year geo_location)
   restore
  
+  preserve
+  keep if merge_issues ==1
+  split geo_location, p(", ")
+  drop if geo_location=="NACIONAL"
+  drop geo_location
+  reshape long geo_location, i(geo_location? strike_code)
+  sort strike_code _j
+  drop if geo_location==""
+  drop geo_location1 geo_location2 geo_location3 geo_location4 geo_location5 geo_location6
+  rename _j multiple_location_strike
+  drop code geography
+  merge m:1 geo_location using "`codecountylist'"
+  drop if _merge==2
+  tempfile append_multiple_strike
+  save "`append_multiple_strike'"
+  restore
+  
+  append using "`append_multiple_strike'"
+  replace multiple_location_strike=0 if multiple_location_strike==.
+  
   save "`strike_clean'\DIEESE_strikes.dta", replace 
-
   
   *-----------------------------------------------------------------------------
   * In the future, next section modifys data to fit specification and merge with fullbrazil.dta Options: 1. Collapse number of strikes by year and county 2. Collapse number of days by year and county; additional specs: include type of strike and type of participants 
@@ -271,6 +359,7 @@
 *2b. Some locations in the strike DIEESE data are multi states and multicity. DECISION POINT: How to treat?
 
 NACIONAL
+AM, PA
 BA, PB, PR
 Uberaba/MG, Uberlândia/MG
 Cuiabá/MT, Várzea Grande/MT
@@ -282,9 +371,10 @@ Avaré/SP, Cerqueira César/SP, Itapetininga/SP
 Barcarena/PA, Castanhal/PA, Conceição do Araguaia/PA, Jacundá/PA, Tucuruí/PA
 Estrela do Norte/SP, Presidente Prudente/SP, Regente Feijó/SP, Rosana/SP, Sandovalina/SP
 Brasnorte/MT, Jaciara/MT, Nova Olímpia/MT, Ribeirão Cascalheira/MT, Santo Antônio do Leverger/MT, Vila Rica/MT
-clean categoria_profissional, change carater 1, 2, 3 to binary with label
+clean categoria_profissional, change carater 1, 2, 3 to binary with labe
 
 */
+
 }
 
 
