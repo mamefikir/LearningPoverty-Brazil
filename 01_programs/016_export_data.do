@@ -30,12 +30,24 @@ quietly {
   order `vars_to_export'
   keep  `vars_to_export'
 
+  * County only
   preserve
     keep if geography == "county"
+
+    * Save county file in long format
     save  "`outputs'/LP_Brazil_by_county.dta", replace
     export delimited "`outputs'/LP_Brazil_by_county.csv", replace
+
+    * Save county file in wide format, with the change between 2013-2017
+    reshape wide learning_poverty nonprof gap gap_squared score ntest testpart net_enrollment population_1014, i(geography code statecode uf idgrade threshold subject) j(year)
+    foreach var in learning_poverty nonprof gap gap_squared score ntest testpart net_enrollment population_1014 {
+      gen `var'change = `var'2017 - `var'2013
+    }
+    save  "`outputs'/LP_Brazil_by_county_wide.dta", replace
+
   restore
 
+  * State and Country (all but county)
   keep if geography != "county"
   replace uf = "BRA" if statecode == 0
   export delimited   "`outputs'/LP_Brazil_by_state.csv", replace
@@ -58,23 +70,30 @@ quietly {
 
   noi disp as res "Done preparing export data."
 
+  ****
 
+  * Creates the graphs for the Learning Poverty Working Paper
+  use "`outputs'/LP_Brazil_by_county_wide.dta", clear
 
-  ***** MAPTILE ****   **** move to a better place ****
-  foreach command in maptile spmap {
-    cap which `command'
-    if _rc == 111  ssc install `command'
-  }
-  maptile_install using "${clone}/02_rawdata/Maptile_Template/brazil_counties.zip", replace
-
-  cd "${clone}"
-
-  use "`outputs'/LP_Brazil_by_county.dta", clear
+  * For maptile template compatibility
   clonevar county_code = code
-  keep if year == 2017
 
-  maptile learning_poverty, geography(brazil_counties) stateoutline(medium) ///
-         fcolor(BuRd) cutvalues(20 40 60 80) legdecimals(1) ///
-         twopt(legend(subtitle("Learning Poverty")))
+  * Learning Poverty 2013 levels
+  maptile learning_poverty2013, geography(brazil_counties) stateoutline(medium) ///
+         fcolor(BuRd) cutvalues(20 40 60 80) legdecimals(0) ///
+         twopt(legend(subtitle("LP 2013 (%)"))) ///
+         savegraph("`outputs'/WP_LP_level_2013.png") replace
+
+   * Learning Poverty 2017 levels
+   maptile learning_poverty2017, geography(brazil_counties) stateoutline(medium) ///
+          fcolor(BuRd) cutvalues(20 40 60 80) legdecimals(0) ///
+          twopt(legend(subtitle("LP 2017 (%)"))) ///
+          savegraph("`outputs'/WP_LP_level_2017.png") replace
+
+   * Learning Poverty 2013-2017 change
+   maptile learning_povertychange, geography(brazil_counties) stateoutline(medium) ///
+          fcolor(BuRd) cutvalues(-20 -10 0 10 20) legdecimals(0) ///
+          twopt(legend(subtitle("LP Change (pp)"))) ///
+          savegraph("`outputs'/WP_LP_change_2013_2017.png") replace
 
 }
