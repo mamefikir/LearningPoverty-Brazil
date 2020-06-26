@@ -70,30 +70,90 @@ quietly {
 
   noi disp as res "Done preparing export data."
 
-  ****
+  *-----------------------------------------------------------------------------
+  * HOTSPOT AND MAPTILE
 
-  * Creates the graphs for the Learning Poverty Working Paper
+  * Load hotspot ado
+  do "${clone}/01_programs/Hotspot_ado/hotspot.ado
+
+  * Importing centroids txt (hosted in Repo - was calculated in ArcGIS based on shapefile downloaded from IBGE)
+  import delimited "${clone}/02_rawdata/IBGE_Shapefile/IBGE_counties_centroids.csv", encoding("utf-8") clear
+  rename cd_geocmu code
+  save "${clone}/02_rawdata/IBGE_Shapefile/IBGE_counties_centroids.dta", replace
+
+  * Reopen the dataset we want to create graphs for
   use "`outputs'/LP_Brazil_by_county_wide.dta", clear
+
+  * Merge centroid information
+  merge m:1 code using "${clone}/02_rawdata/IBGE_Shapefile/IBGE_counties_centroids.dta", keep(match) nogen
+
+  * Create population-weighted variables for HotSpot analysis
+  gen learning_poverty2013_wgt   = learning_poverty2013/100   * population_10142013
+  gen learning_poverty2017_wgt   = learning_poverty2017/100   * population_10142017
+  gen learning_povertychange_wgt = learning_povertychange/100 * population_10142017
+
+  * Performs hotspot for all the LP variables (3 unweighted and 3 weighted)
+  hotspot learning_poverty*, xcoord(x_cent) ycoord(y_cent) radius(500) nei(1)
+
+  * Hotspot creates 2 variables for each of them, with the prefix "goS_" and  "goZ_"
 
   * For maptile template compatibility
   clonevar county_code = code
+  
+  * All graphs we want to graph
+  
+  * Graph 1
+  local varname1   "learning_poverty2013"
+  local subtitle1  "LP 2013 (%)"
+  local cosmetic1  "cutvalues(20 40 60 80) legdecimals(0)"
+  local filename1  "WP_LP_reg_2013.png"
 
-  * Learning Poverty 2013 levels
-  maptile learning_poverty2013, geography(brazil_counties) stateoutline(medium) ///
-         fcolor(BuRd) cutvalues(20 40 60 80) legdecimals(0) ///
-         twopt(legend(subtitle("LP 2013 (%)"))) ///
-         savegraph("`outputs'/WP_LP_level_2013.png") replace
+  * Graph 2
+  local varname2   "learning_poverty2017"
+  local subtitle2  "LP 2017 (%)"
+  local cosmetic2  "cutvalues(20 40 60 80) legdecimals(0)"
+  local filename2  "WP_LP_reg_2017.png"
 
-   * Learning Poverty 2017 levels
-   maptile learning_poverty2017, geography(brazil_counties) stateoutline(medium) ///
-          fcolor(BuRd) cutvalues(20 40 60 80) legdecimals(0) ///
-          twopt(legend(subtitle("LP 2017 (%)"))) ///
-          savegraph("`outputs'/WP_LP_level_2017.png") replace
+  * Graph 3
+  local varname3   "learning_povertychange"
+  local subtitle3  "LP Change (pp)"
+  local cosmetic3  "cutvalues(-20 -10 0 10 20) legdecimals(0)"
+  local filename3  "WP_LP_reg_change.png"
+  
+  * Not sure which of the many Hotspot outputs to use - TODO check
+  * I'm guessing goS is the standardized of goZ
+  
+  * Graph 4
+  local varname4   "goS_learning_poverty2017"
+  local subtitle4  "HotSpot 2017"
+  local filename4  "WP_LP_hs_2017_nowgt.png"
 
-   * Learning Poverty 2013-2017 change
-   maptile learning_povertychange, geography(brazil_counties) stateoutline(medium) ///
-          fcolor(BuRd) cutvalues(-20 -10 0 10 20) legdecimals(0) ///
-          twopt(legend(subtitle("LP Change (pp)"))) ///
-          savegraph("`outputs'/WP_LP_change_2013_2017.png") replace
+  * Graph 5
+  local varname5   "goS_learning_poverty2017_wgt"
+  local subtitle5  "HotSpot 2017"
+  local filename5  "WP_LP_hs_2017_weighted.png"
+
+  * Graph 6
+  local varname6   "goS_learning_povertychange"
+  local subtitle6  "HotSpot Change"
+  local filename6  "WP_LP_hs_change_nowgt.png"
+
+  * Graph 7
+  local varname7   "goS_learning_povertychange_wgt"
+  local subtitle7  "HotSpot Change"
+  local filename7  "WP_LP_hs_change_weighted.png"
+
+  * Map all related Learning Poverty values by county
+  forvalues i=1/7 {
+    maptile `varname`i'', geography(brazil_counties) stateoutline(medium) ///
+          fcolor(BuRd) `cosmetic`i'' ///
+          twopt(legend(subtitle(`subtitle`i''))) ///
+          savegraph("${clone}/04_outputs/`filename`i''") replace
+  }
+  *-----------------------------------------------------------------------------
+
+
+
+
 
 }
