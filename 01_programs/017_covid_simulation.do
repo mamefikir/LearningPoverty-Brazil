@@ -229,18 +229,18 @@ quietly {
   * Aggregate average EYS for states and country
   levelsof statecode if geography == "state", local(states)
   foreach value in base `days_to_simulate' {
-  	
+
     * National number
     sum eys_`value' if geography == "county" [aw=population_1014], meanonly
     replace eys_`value' = `r(mean)' if geography == "country"
-    
+
     * State numbers
-    foreach state of local states {  	
+    foreach state of local states {
     	sum eys_`value' if statecode == `state' & geography == "county" [aw=population_1014], meanonly
       replace eys_`value' = `r(mean)' if geography == "state" & statecode == `state'
     }
   }
-  
+
   * Beautify
   local idvars "code idgrade threshold subject private"
   local traitvars "geography statecode uf countyname"
@@ -279,81 +279,4 @@ quietly {
 
   noi disp as res _newline "Done."
 
-}  
-
-  /*-----------------------------------------------------------------------------
-
-  * Opens brazilfull again to check national spells
-  use "`cleandata'/brazilfull.dta", clear
-  keep if geography == "country" & idgrade == 5 & threshold == "med" & subject == "read" & private == 9
-  tset year
-  twoway (tsline learning_poverty), xlabel(2011(2)2019) ylabel(,format(%9.0fc))
-
-  -----------------------------------------------------------------------------*/
-
-  noi disp as txt _newline "Distrubutional analysis"
-
-  * Plot Kernel Densities of Learning Poverty and Mean Score [COUNTY LEVEL DATA]
-
-  kdensity learning_poverty_base , addplot(kdensity learning_poverty_60  || kdensity learning_poverty_90 || kdensity learning_poverty_120)
-
-  kdensity score_base , addplot(kdensity score_60 || kdensity score_90 || kdensity score_120) xline(200)
-
-
-  * Decompose Change in Learning Poverty (mean and distribution) [REQUIRE STUDENT LEVEL DATA]
-
-  use "${clone}/02_rawdata/INEP_SAEB/SAEB_ALUNO_COVID.dta", clear
-
-  keep if include_student == 1
-  rename (score nonprof) (score_base nonprof_base)
-
-  reshape long score_ nonprof_, i(year id*) j(type_str) string
-
-  encode type_str, gen(type)
-  recode type 4=0 2=1 3=2 1=3
-
-  gen varpl = 200
-
-  drdecomp score_ [aw = learner_weight] if type==0 | type==1, by(type) varpl(varpl)
-  drdecomp score_ [aw = learner_weight] if type==0 | type==2, by(type) varpl(varpl)
-  drdecomp score_ [aw = learner_weight] if type==0 | type==3, by(type) varpl(varpl)
-
-*-----------------------------------------------------------------------------
-* Learning Poverty Simulation (distributionally neutral)
-
-cap whereis github
-if _rc == 0 global clone "`r(github)'/LearningPoverty-Brazil"
-
-cap whereis myados
-if _rc == 0 global myados "`r(myados)'"
-
-cd "${myados}\groupdata\src"
-discard
-
-
-use "${clone}\02_rawdata\INEP_SAEB\SAEB_ALUNO_COVID.dta", clear
-
-groupdata score [aw=learner_weight], z(200) benchmark group 
-
-groupdata score [aw=learner_weight], z(200) mu(207.9) benchmark group 
-  
-*-----------------------------------------------------------------------------
-* distribuion all years
-  
-	clear
-	
-	forvalues year=2011(2)2017 {
-	  append using "${clone}/02_rawdata/INEP_SAEB/Downloads/SAEB_ALUNO_`year'.dta"
-	}
-	
-	keep if in_situacao_censo == 1 & idgrade==5
-	
-	keep year id* private* score_lp learner_weight_lp
-	 
-	tw (kdensity score_lp [aw=learner_weight_lp] if year==2011) ///
-		(kdensity score_lp [aw=learner_weight_lp] if year==2013) ///
-		(kdensity score_lp [aw=learner_weight_lp] if year==2015) ///
-		(kdensity score_lp [aw=learner_weight_lp] if year==2017, xline(200))
-
-  /*-----------------------------------------------------------------------------
-
+}
