@@ -1,7 +1,7 @@
 *==============================================================================*
 *! LEARNING POVERTY IN BRAZIL: replicating the WB indicator at subnational level
 *! Project information at: https://github.com/worldbank/LearningPoverty-Brazil
-*! Author:  Diana Goldemberg and Joao Pedro Azevedo
+*! EduAnalytics Team, World Bank Group [eduanalytics@worldbank.org]
 *
 * About this project:
 *   Replicates the World Bank indicator that combines schooling and learning
@@ -9,16 +9,24 @@
 *==============================================================================*
 quietly {
 
+  /*
+  Steps in this do-file:
+  0) General program setup
+  1) Define user-dependant path for local clone repo
+  2) Other user-dependant choices and flags
+  3) Download and install required user written ado's
+  4) Runs each required task in this project
+  */
 
   *-----------------------------------------------------------------------------
-  * General program setup
+  * 0) General program setup
   *-----------------------------------------------------------------------------
   clear               all
   capture log         close _all
   set more            off
   set varabbrev       off, permanently
   set emptycells      drop
-  set maxvar          10000
+  set maxvar          2048
   version             15
 
   * Time-saving option is activated by default (that is, set to zero)
@@ -30,22 +38,26 @@ quietly {
 
 
   *-----------------------------------------------------------------------------
-  * Define user-dependant path for local clone repo
+  * 1) Define user-dependant path for local clone repo
   *-----------------------------------------------------------------------------
+  * Change here only if this repo is renamed
+  local repo_name     "LearningPoverty-Brazil"
   * Change here only if this master run do-file is renamed
-  local master_run_do "run_LearningPovertyBrazil.do"
+  local master_run_do "run_LearningPoverty-Brazil.do"
+
+  * The remaining of this section is standard in EduAnalytics repos
 
   * One of two options can be used to "know" the clone path for a given user
-  * 1. the user had previously saved their GitHub location with -whereis-,
+  * A. the user had previously saved their GitHub location with -whereis-,
   *    so the clone is a subfolder with this Project Name in that location
-  * 2. through a window dialog box where the user manually selects a file
+  * B. through a window dialog box where the user manually selects a file
 
-  * Method 1 - Github location stored in -whereis-
+  * Method A - Github location stored in -whereis-
   *---------------------------------------------
   capture whereis github
   if _rc == 0 global clone "`r(github)'/LearningPoverty-Brazil"
 
-  * Method 2 - clone selected manually
+  * Method B - clone selected manually
   *---------------------------------------------
   else {
     * Display an explanation plus warning to force the user to look at the dialog box
@@ -69,7 +81,7 @@ quietly {
       * If yes, attributes the path chosen by user to the clone, if not, exit
       if "`user_chosen_do'" == "`master_run_do'"  global clone "`user_chosen_path'"
       else {
-        noi disp as error _newline "{phang}You selected $path_and_master_run_do as the master do file. This does not match what was expected (any path/`master_run_do') thus the code is aborted.{p_end}"
+        noi disp as error _newline "{phang}You selected $path_and_master_run_do as the master do file. This does not match what was expected (any path/`repo_name'/`master_run_do'). Code aborted.{p_end}"
         error 2222
       }
     }
@@ -80,17 +92,17 @@ quietly {
   * Confirm that clone is indeed accessible by testing that master run is there
   cap confirm file "${clone}/`master_run_do'"
   if _rc != 0 {
-    noi disp as error _n "{phang}Having issues accessing your local clone of the LearningPoverty-Brazil repo. Please double check the clone location specified in the master run do-file and try again.{p_end}"
+    noi disp as error _n "{phang}Having issues accessing your local clone of the `repo_name' repo. Please double check the clone location specified in the master run do-file and try again.{p_end}"
     error 2222
   }
   else {
-    noi disp as result _n "{phang}LearningPoverty-Brazil project profile sucessfully loaded.{p_end}"
+    noi disp as result _n "{phang}`repo_name' project profile sucessfully loaded.{p_end}"
   }
   *-----------------------------------------------------------------------------
 
 
   *-----------------------------------------------------------------------------
-  * Other user-dependant choices
+  * 2) Other user-dependant choices and flags
   *-----------------------------------------------------------------------------
   * In case the username is a WB login, will get raw files from WB network
   * because it will not be possible to download them on-the-fly (IT security)
@@ -114,10 +126,10 @@ quietly {
 
 
   *-----------------------------------------------------------------------------
-  * Download and install required user written ado's
+  * 3) Download and install required user written ado's
   *-----------------------------------------------------------------------------
   * Fill this list will all user-written commands this project requires
-  local user_commands touch mdesc spmap maptile drdecomp apoverty alorenz
+  local user_commands touch mdesc spmap maptile // drdecomp apoverty alorenz
 
   * Loop over all the commands to test if they are already installed, if not, then install
   foreach command of local user_commands {
@@ -131,7 +143,7 @@ quietly {
 
 
   *-----------------------------------------------------------------------------
-  * Runs each required program in this repository
+  * 4) Runs each required task in this project
   *-----------------------------------------------------------------------------
   * TASK 011: Copy needed zips from Diana's Dropbox Public Folder or WB Network
   * PLACEHOLDER!!! Once I finish the EduBra repo, this will not be needed.
@@ -153,7 +165,7 @@ quietly {
 
   * TASK 016: Export some data for paper and ppt
   noi do "${clone}/01_programs/016_export_data.do"
-  
+
   * TASK 017: Simulate Covid-19 effects on Learning Poverty
   noi do "${clone}/01_programs/017_covid_simulation.do"
   *-----------------------------------------------------------------------------
